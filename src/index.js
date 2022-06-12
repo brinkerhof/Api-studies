@@ -1,5 +1,5 @@
 const Express = require("express");
-const app = Express();
+const merda = Express();
 
-app.use(express.json());
-app.use(express.urlencoded());
+merda.use(express.json());
+merda.use(express.urlencoded());
