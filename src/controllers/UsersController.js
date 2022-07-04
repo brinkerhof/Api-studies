@@ -1,4 +1,4 @@
-const { hash } = require("bcryptjs");
+const { hash, compare } = require("bcryptjs");
 
 const AppError = require("../utils/AppError");
 
@@ -12,6 +12,13 @@ class UsersControllers {
    * update - PUT para atualizar um registro
    * delete - DELETE para remover um registro
    */
+  async index(req, res) {
+    const database = await sqliteConnection();
+    const users = await database.get("SELECT * FROM users");
+
+    res.json(users);
+  }
+
   async create(req, res) {
     const { name, email, password } = req.body;
 
@@ -35,7 +42,7 @@ class UsersControllers {
   }
 
   async update(req, res) {
-    const { name, email } = req.body;
+    const { name, email, password, old_password } = req.body;
 
     const { id } = req.params;
 
@@ -55,16 +62,31 @@ class UsersControllers {
       throw new AppError("This email already exists");
     }
 
-    user.name = name;
-    user.email = email;
+    user.name = name ?? user.name;
+    user.email = email ?? user.email;
+
+    if (password && !old_password) {
+      throw new AppError("You need to provide old password ");
+    }
+
+    if (password && old_password) {
+      const checkOldPassword = await compare(old_password, user.password);
+
+      if (!checkOldPassword) {
+        throw new AppError("Old password dont match");
+      }
+
+      user.password = await hash(password, 8);
+    }
 
     await database.run(
       `
       UPDATE users SET
       name = ?,
       email = ?,
-      updated_at = ? WHERE id = ?`,
-      [user.name, user.email, new Date(), id]
+      password = ?,
+      updated_at = DATETIME('now') WHERE id = ?`,
+      [user.name, user.email, user.password, id]
     );
 
     return res.json();
