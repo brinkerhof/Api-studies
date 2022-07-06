@@ -4,7 +4,8 @@
   "description": "An padel tournment organizer",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon src/server.js"
+    "start": "nodemon src/server.js",
+    "migrate": "npx knex migrate:latest"
   },
   "repository": {
     "type": "git",
